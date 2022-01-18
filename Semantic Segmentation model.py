@@ -25,6 +25,7 @@ import torchvision.models as models
 
 import random
 
+
 # Load and Prepare data
 ## data 경로 설정 
 root = os.path.join(os.getcwd(), "drive", "MyDrive", "Colab Notebooks", "data")
@@ -36,7 +37,6 @@ class Dataset(torch.utils.data.Dataset):
         self.transforms = transforms
         self.imgs = list(sorted(os.listdir(os.path.join(root, "images"))))
         self.masks = list(sorted(os.listdir(os.path.join(root, "masks"))))
-        
         
     def __getitem__(self, idx):
         # load images ad masks
@@ -130,6 +130,7 @@ dent_test = Dataset(os.path.join(root,'./test'), get_transform(train=False))
 train_loader = DataLoader(dent_train, batch_size=10, shuffle=True, drop_last=True)
 valid_loader = DataLoader(dent_valid, batch_size=10, shuffle=False, drop_last=True)
 test_loader = DataLoader(dent_test, batch_size=1, shuffle=False, drop_last=True)
+
 
 # Trainer class
 class Semantic_Seg_Trainer(nn.Module):
@@ -268,7 +269,6 @@ class Semantic_Seg_Trainer(nn.Module):
 
         epoch_loss /= len(train_loader)  
         
-        
         iou_back = ious[0]/(cnt*x.shape[0])
         iou_scratch = ious[1]/(cnt*x.shape[0])
         epoch_miou = (ious[0]/(cnt*x.shape[0]) + ious[1]/(cnt*x.shape[0])) / 2.
@@ -397,14 +397,12 @@ class Semantic_Seg_Trainer(nn.Module):
 
         epoch_loss /= len(test_loader)
         
-        
         iou_back = ious[0]/(cnt*x.shape[0])
         iou_scratch = ious[1]/(cnt*x.shape[0])
         epoch_miou = (ious[0]/(cnt*x.shape[0]) + ious[1]/(cnt*x.shape[0])) / 2.
         
         print(f"Test loss: {epoch_loss:>6f}, miou: {epoch_miou:>6f}, iou_back : {iou_back:>6f}, iou_scratch : {iou_scratch:>6f}, time: {time.time()-epoch_start_time:>3f}")
 
-    
     def batch_segmentation_iou(self, outputs, labels):
         """
             outputs, labels : (batch, h, w)
@@ -419,7 +417,8 @@ class Semantic_Seg_Trainer(nn.Module):
         
         return torch.sum(iou).to("cpu").numpy()
       
-# Model
+        
+# Model load
 seg = models.segmentation.deeplabv3_resnet101(pretrained=True)
 seg.classifier[3] = nn.LeakyReLU()
 seg.classifier[4] = nn.Conv2d(256, 2, 1, 1)
@@ -435,7 +434,8 @@ print(f"Training time : {time.time()-start_time:>3f}")
 ## Model Test
 trainer.test(test_loader)
 
-# Fine Tuning Test
+
+# Fine Tuning
 def show_plot(image, mask, prediction):
   '''결과를 그래프로 보여주는 함수'''
   
@@ -492,6 +492,6 @@ output = seg(input_image.unsqueeze(dim=0))
 
 cls = torch.argmax(output['out'][0].to("cpu"), dim=0).numpy()
 out = np.zeros_like(cls)
-
-show_plot(image, mask, out)
 out[cls>=1] = 1
+
+show_plot(image, mask, out) # Show Result
